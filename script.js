@@ -37,22 +37,35 @@ document.addEventListener("keydown", (e) => {
 // ===== Threats =====
 const threat1 = document.getElementById("threat1");
 const threat2 = document.getElementById("threat2");
+const threatSpeed = 2; // pixels per move
 
-// Function to move a threat to a random position
-function moveThreat(threat) {
-    const x = Math.floor(Math.random() * 550); // 600 - 50
-    const y = Math.floor(Math.random() * 350); // 400 - 50
-    threat.style.left = x + "px";
-    threat.style.top = y + "px";
+// Threats chase player
+function chasePlayer(threat) {
+    let threatX = parseInt(threat.style.left);
+    let threatY = parseInt(threat.style.top);
+
+    if (playerX > threatX) threatX += threatSpeed;
+    if (playerX < threatX) threatX -= threatSpeed;
+    if (playerY > threatY) threatY += threatSpeed;
+    if (playerY < threatY) threatY -= threatSpeed;
+
+    // Keep threats inside game area
+    if (threatX < 0) threatX = 0;
+    if (threatY < 0) threatY = 0;
+    if (threatX > 550) threatX = 550;
+    if (threatY > 350) threatY = 350;
+
+    threat.style.left = threatX + "px";
+    threat.style.top = threatY + "px";
 }
 
-// Move threats randomly every 1 second
+// Update threats every 50ms for smooth chasing
 setInterval(() => {
     if (!gameOver) {
-        moveThreat(threat1);
-        moveThreat(threat2);
+        chasePlayer(threat1);
+        chasePlayer(threat2);
     }
-}, 1000);
+}, 50);
 
 // ===== Collision Detection =====
 const message = document.getElementById("message");
@@ -99,7 +112,8 @@ const scoreInterval = setInterval(() => {
         }
     }
 }, 1000);
-// Restart Game
+
+// ===== Restart Game =====
 const restartBtn = document.getElementById("restartBtn");
 
 restartBtn.addEventListener("click", () => {
