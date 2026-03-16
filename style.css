@@ -49,3 +49,17 @@ body {
     color: red;
     margin-top: 10px;
 }
+#restartBtn {
+    padding: 10px 20px;
+    font-size: 18px;
+    margin-top: 10px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+#restartBtn:hover {
+    background-color: #45a049;
+}
