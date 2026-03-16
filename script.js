@@ -99,3 +99,31 @@ const scoreInterval = setInterval(() => {
         }
     }
 }, 1000);
+// Restart Game
+const restartBtn = document.getElementById("restartBtn");
+
+restartBtn.addEventListener("click", () => {
+    // Reset player position
+    playerX = 275;
+    playerY = 175;
+    player.style.left = playerX + "px";
+    player.style.top = playerY + "px";
+
+    // Reset score
+    score = 0;
+    scoreDisplay.textContent = score;
+
+    // Reset game over flag
+    gameOver = false;
+
+    // Clear message
+    message.textContent = "";
+
+    // Reset music
+    defeatMusic.pause();
+    defeatMusic.currentTime = 0;
+    victoryMusic.pause();
+    victoryMusic.currentTime = 0;
+    bgMusic.currentTime = 0;
+    bgMusic.play();
+});
