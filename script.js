@@ -1,31 +1,31 @@
-// ===== ELEMENTS =====
+// ELEMENTS
 const player = document.getElementById("player");
 const threat1 = document.getElementById("threat1");
 const threat2 = document.getElementById("threat2");
+
+const scoreDisplay = document.getElementById("score");
+const message = document.getElementById("message");
 
 const bgMusic = document.getElementById("bgMusic");
 const defeatMusic = document.getElementById("defeatMusic");
 const victoryMusic = document.getElementById("victoryMusic");
 
-const scoreDisplay = document.getElementById("score");
-const message = document.getElementById("message");
-const restartBtn = document.getElementById("restartBtn");
-
-// ===== GAME STATE =====
 let gameOver = false;
 let score = 0;
 
 // PLAYER
-let playerX = 275;
-let playerY = 175;
-const playerSpeed = 5;
+let playerX = 200;
+let playerY = 200;
+let moveX = 0;
+let moveY = 0;
+const speed = 4;
 
-// THREATS
-let t1 = { x: 50, y: 50, speed: 2 };
-let t2 = { x: 500, y: 300, speed: 3 };
+// THREATS (SLOWER)
+let t1 = { x: 50, y: 50, speed: 1.2 };
+let t2 = { x: 300, y: 300, speed: 1.6 };
 
-// ===== UPDATE POSITIONS =====
-function updatePositions() {
+// UPDATE POSITIONS
+function update() {
     player.style.left = playerX + "px";
     player.style.top = playerY + "px";
 
@@ -36,56 +36,65 @@ function updatePositions() {
     threat2.style.top = t2.y + "px";
 }
 
-updatePositions();
-
-// ===== CONTROLS =====
-let moving = false;
-
-document.addEventListener("keydown", (e) => {
-    if (gameOver) return;
-
-    moving = true;
-    player.classList.add("moving");
-
-    if (e.key === "ArrowUp") playerY -= playerSpeed;
-    if (e.key === "ArrowDown") playerY += playerSpeed;
-    if (e.key === "ArrowLeft") playerX -= playerSpeed;
-    if (e.key === "ArrowRight") playerX += playerSpeed;
-
-    playerX = Math.max(0, Math.min(550, playerX));
-    playerY = Math.max(0, Math.min(350, playerY));
+// KEYBOARD
+document.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp") moveY = -1;
+    if (e.key === "ArrowDown") moveY = 1;
+    if (e.key === "ArrowLeft") moveX = -1;
+    if (e.key === "ArrowRight") moveX = 1;
 });
 
 document.addEventListener("keyup", () => {
-    moving = false;
-    player.classList.remove("moving");
+    moveX = 0;
+    moveY = 0;
 });
 
-// ===== ENEMY AI =====
-function moveThreats() {
-    // Threat 1 (direct chase)
-    if (playerX > t1.x) t1.x += t1.speed;
-    if (playerX < t1.x) t1.x -= t1.speed;
-    if (playerY > t1.y) t1.y += t1.speed;
-    if (playerY < t1.y) t1.y -= t1.speed;
+// BUTTON CONTROLS
+document.querySelectorAll("#controls button").forEach(btn => {
+    btn.addEventListener("touchstart", () => {
+        const dir = btn.dataset.dir;
+        if (dir === "up") moveY = -1;
+        if (dir === "down") moveY = 1;
+        if (dir === "left") moveX = -1;
+        if (dir === "right") moveX = 1;
+    });
 
-    // Threat 2 (random chase)
+    btn.addEventListener("touchend", () => {
+        moveX = 0;
+        moveY = 0;
+    });
+});
+
+// SWIPE CONTROL
+let startX, startY;
+
+document.addEventListener("touchstart", e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+});
+
+document.addEventListener("touchmove", e => {
+    let dx = e.touches[0].clientX - startX;
+    let dy = e.touches[0].clientY - startY;
+
+    moveX = dx / 50;
+    moveY = dy / 50;
+});
+
+// ENEMY AI
+function moveEnemies() {
+    t1.x += (playerX > t1.x ? t1.speed : -t1.speed);
+    t1.y += (playerY > t1.y ? t1.speed : -t1.speed);
+
     let offsetX = (Math.random() - 0.5) * 20;
     let offsetY = (Math.random() - 0.5) * 20;
 
-    t2.x += (playerX + offsetX > t2.x) ? t2.speed : -t2.speed;
-    t2.y += (playerY + offsetY > t2.y) ? t2.speed : -t2.speed;
-
-    // bounds
-    t1.x = Math.max(0, Math.min(550, t1.x));
-    t1.y = Math.max(0, Math.min(350, t1.y));
-
-    t2.x = Math.max(0, Math.min(550, t2.x));
-    t2.y = Math.max(0, Math.min(350, t2.y));
+    t2.x += (playerX + offsetX > t2.x ? t2.speed : -t2.speed);
+    t2.y += (playerY + offsetY > t2.y ? t2.speed : -t2.speed);
 }
 
-// ===== COLLISION =====
-function isColliding(a, b) {
+// COLLISION
+function hit(a, b) {
     return !(
         a.x + 50 < b.x ||
         a.x > b.x + 50 ||
@@ -94,34 +103,44 @@ function isColliding(a, b) {
     );
 }
 
-// ===== GAME LOOP =====
-function gameLoop() {
+// GAME LOOP
+function loop() {
     if (!gameOver) {
-        moveThreats();
+        playerX += moveX * speed;
+        playerY += moveY * speed;
 
-        if (
-            isColliding({ x: playerX, y: playerY }, t1) ||
-            isColliding({ x: playerX, y: playerY }, t2)
-        ) {
+        moveEnemies();
+
+        if (hit({x:playerX,y:playerY}, t1) || hit({x:playerX,y:playerY}, t2)) {
             gameOver = true;
             message.textContent = "Game Over!";
             bgMusic.pause();
             defeatMusic.play();
         }
 
-        updatePositions();
+        update();
     }
 
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(loop);
 }
 
-gameLoop();
+loop();
 
-// ===== SCORE =====
+// SCORE + DIFFICULTY
 setInterval(() => {
     if (!gameOver) {
         score++;
         scoreDisplay.textContent = score;
+
+        // gradual difficulty
+        if (score === 10) {
+            t1.speed += 0.5;
+            t2.speed += 0.5;
+        }
+        if (score === 20) {
+            t1.speed += 0.5;
+            t2.speed += 0.5;
+        }
 
         if (score >= 30) {
             gameOver = true;
@@ -132,34 +151,9 @@ setInterval(() => {
     }
 }, 1000);
 
-// ===== MUSIC =====
+// MUSIC
 window.onload = () => {
-    bgMusic.play().catch(() => {
-        console.log("Click screen to enable music");
-    });
+    document.body.addEventListener("click", () => {
+        bgMusic.play();
+    }, { once: true });
 };
-
-// ===== RESTART =====
-restartBtn.addEventListener("click", () => {
-    playerX = 275;
-    playerY = 175;
-
-    t1 = { x: 50, y: 50, speed: 2 };
-    t2 = { x: 500, y: 300, speed: 3 };
-
-    score = 0;
-    gameOver = false;
-
-    message.textContent = "";
-    scoreDisplay.textContent = 0;
-
-    defeatMusic.pause();
-    defeatMusic.currentTime = 0;
-    victoryMusic.pause();
-    victoryMusic.currentTime = 0;
-
-    bgMusic.currentTime = 0;
-    bgMusic.play();
-
-    updatePositions();
-});
