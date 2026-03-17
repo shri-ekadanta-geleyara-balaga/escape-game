@@ -1,31 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Escape Game</title>
-    <link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escape Game</title>
+<link rel="stylesheet" href="style.css">
 </head>
-<body>
 
-<h1>Escape from Threats</h1>
+<body>
 
 <div id="gameArea">
     <img id="player" src="player.jpg">
     <img id="threat1" src="threat1.jpg">
     <img id="threat2" src="threat2.jpg">
+
+    <!-- MOBILE CONTROLS -->
+    <div id="controls">
+        <button data-dir="up">↑</button>
+        <div>
+            <button data-dir="left">←</button>
+            <button data-dir="right">→</button>
+        </div>
+        <button data-dir="down">↓</button>
+    </div>
 </div>
 
-<p>Score: <span id="score">0</span></p>
-<p id="message"></p>
+<div id="ui">
+    Score: <span id="score">0</span>
+    <p id="message"></p>
+    <button id="restartBtn">Restart</button>
+</div>
 
-<button id="restartBtn">Restart Game</button>
-
-<!-- MUSIC -->
 <audio id="bgMusic" src="bgmusic.mp3" loop></audio>
 <audio id="defeatMusic" src="defeat.mp3"></audio>
 <audio id="victoryMusic" src="victory.mp3"></audio>
 
 <script src="script.js"></script>
-
 </body>
 </html>
