@@ -1,143 +1,165 @@
-// script.js
+// ===== ELEMENTS =====
+const player = document.getElementById("player");
+const threat1 = document.getElementById("threat1");
+const threat2 = document.getElementById("threat2");
 
-// ===== Music =====
 const bgMusic = document.getElementById("bgMusic");
 const defeatMusic = document.getElementById("defeatMusic");
 const victoryMusic = document.getElementById("victoryMusic");
 
-// Start background music automatically when page loads
-window.onload = () => {
-    bgMusic.play();
-};
+const scoreDisplay = document.getElementById("score");
+const message = document.getElementById("message");
+const restartBtn = document.getElementById("restartBtn");
 
-// ===== Player =====
-const player = document.getElementById("player");
-let playerX = 275;      // initial X position
-let playerY = 175;      // initial Y position
-const playerSpeed = 10; // pixels per move
+// ===== GAME STATE =====
+let gameOver = false;
+let score = 0;
 
-document.addEventListener("keydown", (e) => {
-    if (!gameOver) {
-        if (e.key === "ArrowUp") playerY -= playerSpeed;
-        if (e.key === "ArrowDown") playerY += playerSpeed;
-        if (e.key === "ArrowLeft") playerX -= playerSpeed;
-        if (e.key === "ArrowRight") playerX += playerSpeed;
+// PLAYER
+let playerX = 275;
+let playerY = 175;
+const playerSpeed = 5;
 
-        // Keep player inside game area
-        if (playerX < 0) playerX = 0;
-        if (playerY < 0) playerY = 0;
-        if (playerX > 550) playerX = 550; // 600px game area - 50px player
-        if (playerY > 350) playerY = 350; // 400px game area - 50px player
+// THREATS
+let t1 = { x: 50, y: 50, speed: 2 };
+let t2 = { x: 500, y: 300, speed: 3 };
 
-        player.style.left = playerX + "px";
-        player.style.top = playerY + "px";
-    }
-});
+// ===== UPDATE POSITIONS =====
+function updatePositions() {
+    player.style.left = playerX + "px";
+    player.style.top = playerY + "px";
 
-// ===== Threats =====
-const threat1 = document.getElementById("threat1");
-const threat2 = document.getElementById("threat2");
-const threatSpeed = 2; // pixels per move
+    threat1.style.left = t1.x + "px";
+    threat1.style.top = t1.y + "px";
 
-// Threats chase player
-function chasePlayer(threat) {
-    let threatX = parseInt(threat.style.left);
-    let threatY = parseInt(threat.style.top);
-
-    if (playerX > threatX) threatX += threatSpeed;
-    if (playerX < threatX) threatX -= threatSpeed;
-    if (playerY > threatY) threatY += threatSpeed;
-    if (playerY < threatY) threatY -= threatSpeed;
-
-    // Keep threats inside game area
-    if (threatX < 0) threatX = 0;
-    if (threatY < 0) threatY = 0;
-    if (threatX > 550) threatX = 550;
-    if (threatY > 350) threatY = 350;
-
-    threat.style.left = threatX + "px";
-    threat.style.top = threatY + "px";
+    threat2.style.left = t2.x + "px";
+    threat2.style.top = t2.y + "px";
 }
 
-// Update threats every 50ms for smooth chasing
-setInterval(() => {
-    if (!gameOver) {
-        chasePlayer(threat1);
-        chasePlayer(threat2);
-    }
-}, 50);
+updatePositions();
 
-// ===== Collision Detection =====
-const message = document.getElementById("message");
-let gameOver = false;
+// ===== CONTROLS =====
+let moving = false;
 
-function checkCollision(threat) {
-    const threatRect = threat.getBoundingClientRect();
-    const playerRect = player.getBoundingClientRect();
+document.addEventListener("keydown", (e) => {
+    if (gameOver) return;
 
+    moving = true;
+    player.classList.add("moving");
+
+    if (e.key === "ArrowUp") playerY -= playerSpeed;
+    if (e.key === "ArrowDown") playerY += playerSpeed;
+    if (e.key === "ArrowLeft") playerX -= playerSpeed;
+    if (e.key === "ArrowRight") playerX += playerSpeed;
+
+    playerX = Math.max(0, Math.min(550, playerX));
+    playerY = Math.max(0, Math.min(350, playerY));
+});
+
+document.addEventListener("keyup", () => {
+    moving = false;
+    player.classList.remove("moving");
+});
+
+// ===== ENEMY AI =====
+function moveThreats() {
+    // Threat 1 (direct chase)
+    if (playerX > t1.x) t1.x += t1.speed;
+    if (playerX < t1.x) t1.x -= t1.speed;
+    if (playerY > t1.y) t1.y += t1.speed;
+    if (playerY < t1.y) t1.y -= t1.speed;
+
+    // Threat 2 (random chase)
+    let offsetX = (Math.random() - 0.5) * 20;
+    let offsetY = (Math.random() - 0.5) * 20;
+
+    t2.x += (playerX + offsetX > t2.x) ? t2.speed : -t2.speed;
+    t2.y += (playerY + offsetY > t2.y) ? t2.speed : -t2.speed;
+
+    // bounds
+    t1.x = Math.max(0, Math.min(550, t1.x));
+    t1.y = Math.max(0, Math.min(350, t1.y));
+
+    t2.x = Math.max(0, Math.min(550, t2.x));
+    t2.y = Math.max(0, Math.min(350, t2.y));
+}
+
+// ===== COLLISION =====
+function isColliding(a, b) {
     return !(
-        playerRect.top > threatRect.bottom ||
-        playerRect.bottom < threatRect.top ||
-        playerRect.left > threatRect.right ||
-        playerRect.right < threatRect.left
+        a.x + 50 < b.x ||
+        a.x > b.x + 50 ||
+        a.y + 50 < b.y ||
+        a.y > b.y + 50
     );
 }
 
-// Check collisions every 100ms
-setInterval(() => {
-    if (!gameOver && (checkCollision(threat1) || checkCollision(threat2))) {
-        message.textContent = "Game Over!";
-        gameOver = true;
-        bgMusic.pause();
-        defeatMusic.play();
+// ===== GAME LOOP =====
+function gameLoop() {
+    if (!gameOver) {
+        moveThreats();
+
+        if (
+            isColliding({ x: playerX, y: playerY }, t1) ||
+            isColliding({ x: playerX, y: playerY }, t2)
+        ) {
+            gameOver = true;
+            message.textContent = "Game Over!";
+            bgMusic.pause();
+            defeatMusic.play();
+        }
+
+        updatePositions();
     }
-}, 100);
 
-// ===== Score / Timer / Victory =====
-let score = 0;
-const scoreDisplay = document.getElementById("score");
+    requestAnimationFrame(gameLoop);
+}
 
-// Increment score every second
-const scoreInterval = setInterval(() => {
+gameLoop();
+
+// ===== SCORE =====
+setInterval(() => {
     if (!gameOver) {
         score++;
         scoreDisplay.textContent = score;
 
-        // Victory condition: survive 30 seconds
         if (score >= 30) {
-            message.textContent = "You Win!";
             gameOver = true;
+            message.textContent = "You Win!";
             bgMusic.pause();
             victoryMusic.play();
         }
     }
 }, 1000);
 
-// ===== Restart Game =====
-const restartBtn = document.getElementById("restartBtn");
+// ===== MUSIC =====
+window.onload = () => {
+    bgMusic.play().catch(() => {
+        console.log("Click screen to enable music");
+    });
+};
 
+// ===== RESTART =====
 restartBtn.addEventListener("click", () => {
-    // Reset player position
     playerX = 275;
     playerY = 175;
-    player.style.left = playerX + "px";
-    player.style.top = playerY + "px";
 
-    // Reset score
+    t1 = { x: 50, y: 50, speed: 2 };
+    t2 = { x: 500, y: 300, speed: 3 };
+
     score = 0;
-    scoreDisplay.textContent = score;
-
-    // Reset game over flag
     gameOver = false;
 
-    // Clear message
     message.textContent = "";
+    scoreDisplay.textContent = 0;
 
-    // Reset music
     defeatMusic.pause();
     defeatMusic.currentTime = 0;
     victoryMusic.pause();
     victoryMusic.currentTime = 0;
+
     bgMusic.currentTime = 0;
     bgMusic.play();
+
+    updatePositions();
 });
