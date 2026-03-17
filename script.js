@@ -13,16 +13,19 @@ const victoryMusic = document.getElementById("victoryMusic");
 let gameOver = false;
 let score = 0;
 
-// PLAYER
+// PLAYER (FASTER)
 let playerX = 200;
 let playerY = 200;
 let moveX = 0;
 let moveY = 0;
-const speed = 4;
+const speed = 7;
 
-// THREATS (SLOWER)
-let t1 = { x: 50, y: 50, speed: 1.2 };
-let t2 = { x: 300, y: 300, speed: 1.6 };
+// ENEMIES (SLOWER + FAIR)
+let t1 = { x: 50, y: 50, speed: 0.5 };
+let t2 = { x: window.innerWidth - 100, y: window.innerHeight - 100, speed: 0.8 };
+
+// DELAY SYSTEM
+let delayCounter = 0;
 
 // UPDATE POSITIONS
 function update() {
@@ -65,7 +68,7 @@ document.querySelectorAll("#controls button").forEach(btn => {
     });
 });
 
-// SWIPE CONTROL
+// SWIPE CONTROL (SMOOTH)
 let startX, startY;
 
 document.addEventListener("touchstart", e => {
@@ -77,12 +80,15 @@ document.addEventListener("touchmove", e => {
     let dx = e.touches[0].clientX - startX;
     let dy = e.touches[0].clientY - startY;
 
-    moveX = dx / 50;
-    moveY = dy / 50;
+    moveX = Math.max(-1, Math.min(1, dx / 100));
+    moveY = Math.max(-1, Math.min(1, dy / 100));
 });
 
-// ENEMY AI
+// ENEMY AI WITH DELAY
 function moveEnemies() {
+    delayCounter++;
+    if (delayCounter % 3 !== 0) return;
+
     t1.x += (playerX > t1.x ? t1.speed : -t1.speed);
     t1.y += (playerY > t1.y ? t1.speed : -t1.speed);
 
@@ -109,6 +115,10 @@ function loop() {
         playerX += moveX * speed;
         playerY += moveY * speed;
 
+        // boundaries
+        playerX = Math.max(0, Math.min(window.innerWidth - 50, playerX));
+        playerY = Math.max(0, Math.min(window.innerHeight - 50, playerY));
+
         moveEnemies();
 
         if (hit({x:playerX,y:playerY}, t1) || hit({x:playerX,y:playerY}, t2)) {
@@ -126,23 +136,22 @@ function loop() {
 
 loop();
 
-// SCORE + DIFFICULTY
+// SCORE + SMOOTH DIFFICULTY
 setInterval(() => {
     if (!gameOver) {
         score++;
         scoreDisplay.textContent = score;
 
-        // gradual difficulty
-        if (score === 10) {
-            t1.speed += 0.5;
-            t2.speed += 0.5;
+        if (score === 15) {
+            t1.speed += 0.2;
+            t2.speed += 0.2;
         }
-        if (score === 20) {
-            t1.speed += 0.5;
-            t2.speed += 0.5;
+        if (score === 30) {
+            t1.speed += 0.2;
+            t2.speed += 0.2;
         }
 
-        if (score >= 30) {
+        if (score >= 45) {
             gameOver = true;
             message.textContent = "You Win!";
             bgMusic.pause();
@@ -151,7 +160,7 @@ setInterval(() => {
     }
 }, 1000);
 
-// MUSIC
+// MUSIC START
 window.onload = () => {
     document.body.addEventListener("click", () => {
         bgMusic.play();
