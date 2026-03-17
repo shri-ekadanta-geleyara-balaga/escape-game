@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,21 +10,26 @@
 
 <body>
 
-<h1 id="title">Escape the Threats</h1>
+<div id="startScreen">
+<h1>Escape the Threats</h1>
+<button id="startBtn">Start Game</button>
+</div>
 
 <div id="gameArea">
-    <img id="player" src="player.jpg" alt="player">
-    <img id="threat1" src="threat1.jpg" alt="threat1">
-    <img id="threat2" src="threat2.jpg" alt="threat2">
+
+<img id="player" src="player.jpg">
+<img id="threat1" src="threat1.jpg">
+<img id="threat2" src="threat2.jpg">
+
 </div>
 
 <div id="ui">
-    Score: <span id="score">0</span>
+Score: <span id="score">0</span>
 </div>
 
 <p id="message"></p>
 
-<button id="restartBtn" onclick="location.reload()">Play Again</button>
+<button id="restartBtn">Play Again</button>
 
 <audio id="bgMusic" src="bgmusic.mp3" loop></audio>
 <audio id="defeatMusic" src="defeat.mp3"></audio>
